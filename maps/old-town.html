@@ -1,545 +1,800 @@
-// ==============================================  
-// Global Variables and Configuration  
-// ==============================================  
-const MapSystem = {  
-    // Currently active popup  
-    activePopup: null,  
-    
-    // Map data storage  
-    locationData: {},  
-    
-    // Animation settings  
-    animationSettings: {  
-        popupDuration: 300,  
-        hoverDelay: 100,  
-        fadeSpeed: 200  
-    },  
-    
-    // Initialize system  
-    init: function() {  
-        console.log('Map System Initializing...');  
-        this.setupEventListeners();  
-        this.loadLocationData();  
-        this.addNavigationEffects();  
-        this.initializeMapInteractions();  
-    },  
-    
-    // Setup event listeners  
-    setupEventListeners: function() {  
-        // ESC key closes popup  
-        document.addEventListener('keydown', (e) => {  
-            if (e.key === 'Escape') {  
-                this.closeInfo();  
-            }  
-        });  
-        
-        // Click overlay to close popup  
-        const overlay = document.querySelector('.overlay');  
-        if (overlay) {  
-            overlay.addEventListener('click', () => this.closeInfo());  
-        }  
-        
-        // Close button  
-        const closeBtn = document.querySelector('.close-btn');  
-        if (closeBtn) {  
-            closeBtn.addEventListener('click', () => this.closeInfo());  
-        }  
-        
-        // Window resize handler  
-        window.addEventListener('resize', this.handleResize.bind(this));  
-    },  
-    
-    // Load location data  
-    loadLocationData: function() {  
-        this.locationData = {  
-            // Old Town Data  
-            'old-town': {  
-                park: {  
-                    title: "🌳 Central Public Park",  
-                    content: `  
-                        <h4>Location & Environment</h4>  
-                        <p>The park occupies the largest block in the old town center, surrounded by residential streets on three sides and facing the main commercial avenue on the fourth. Mature maple and oak trees line the paths, with a small artificial lake positioned off-center.</p>  
-                        
-                        <h4>Special Features</h4>  
-                        <ul>  
-                            <li><strong>Artificial Lake:</strong> Small pond with weathered wooden dock</li>  
-                            <li><strong>Pathways:</strong> Worn concrete walkways with some original cobblestone</li>  
-                            <li><strong>Seating:</strong> Green-painted metal park benches and picnic tables</li>  
-                            <li><strong>Playground:</strong> Swings, slides, and climbing frames</li>  
-                            <li><strong>Lighting:</strong> Tall park lamp posts with frosted globe shades</li>  
-                        </ul>  
-                        
-                        <h4>Daily Activities</h4>  
-                        <p>Morning joggers, families with children, elderly chess players, and evening dog walkers frequent this peaceful green space.</p>  
-                    `  
-                },  
-                aria: {  
-                    title: "🏠 Aria's Apartment Building",  
-                    content: `  
-                        <h4>Location & Environment</h4>  
-                        <p>Located in a modest small rental apartment building in the quiet residential area. While not particularly comfortable, it's affordable. Aria chose this location for its proximity to the metro and low rent.</p>  
-                        
-                        <h4>Building Details</h4>  
-                        <ul>  
-                            <li><strong>Type:</strong> 3-story walk-up apartment building</li>  
-                            <li><strong>Condition:</strong> Older construction with basic amenities</li>  
-                            <li><strong>Features:</strong> Shared laundry in basement, street parking</li>  
-                            <li><strong>Neighborhood:</strong> Quiet residential with tree-lined streets</li>  
-                        </ul>  
-                        
-                        <h4>Resident Profile</h4>  
-                        <p>Aria lives here as a budget-conscious choice, prioritizing location over luxury. The building houses young professionals and students.</p>  
-                    `  
-                },  
-                coffee: {  
-                    title: "☕ Brew & Books Cafe",  
-                    content: `  
-                        <h4>Atmosphere</h4>  
-                        <p>A cozy neighborhood coffee shop with mismatched furniture, local art on the walls, and the aroma of freshly ground beans. Popular with students, remote workers, and book lovers.</p>  
-                        
-                        <h4>Menu Highlights</h4>  
-                        <ul>  
-                            <li><strong>Coffee:</strong> Locally roasted single-origin and blends</li>  
-                            <li><strong>Pastries:</strong> Fresh croissants, muffins, and scones</li>  
-                            <li><strong>Light Meals:</strong> Sandwiches, salads, and soup of the day</li>  
-                            <li><strong>Books:</strong> Small selection of used books for sale</li>  
-                        </ul>  
-                        
-                        <h4>Special Features</h4>  
-                        <p>Free WiFi, reading nooks, chess boards, and a small stage for acoustic performances on Friday evenings.</p>  
-                    `  
-                },  
-                grocery: {  
-                    title: "🛒 Corner Market",  
-                    content: `  
-                        <h4>Store Profile</h4>  
-                        <p>A family-owned neighborhood grocery store that has served the community for over 30 years. Known for personal service and competitive prices on everyday essentials.</p>  
-                        
-                        <h4>Products & Services</h4>  
-                        <ul>  
-                            <li><strong>Fresh Produce:</strong> Local vegetables and fruits</li>  
-                            <li><strong>Pantry Items:</strong> Canned goods, dry goods, snacks</li>  
-                            <li><strong>Dairy & Meat:</strong> Basic selection of fresh items</li>  
-                            <li><strong>Services:</strong> Package pickup, lottery tickets, ATM</li>  
-                        </ul>  
-                        
-                        <h4>Community Role</h4>  
-                        <p>Serves as a neighborhood hub where residents catch up on local news and events.</p>  
-                    `  
-                },  
-                metro: {  
-                    title: "🚇 Old Town Metro Station",  
-                    content: `  
-                        <h4>Transportation Hub</h4>  
-                        <p>A key transit point connecting the historic old town to downtown and other city districts. Built in the 1980s with recent renovations improving accessibility.</p>  
-                        
-                        <h4>Station Features</h4>  
-                        <ul>  
-                            <li><strong>Lines:</strong> Blue and Green line intersection</li>  
-                            <li><strong>Accessibility:</strong> Elevator access to platform level</li>  
-                            <li><strong>Amenities:</strong> Ticket vending, security cameras, information kiosks</li>  
-                            <li><strong>Connections:</strong> Bus stops for routes 15, 23, and 41</li>  
-                        </ul>  
-                        
-                        <h4>Operating Hours</h4>  
-                        <p>5:30 AM - 12:30 AM daily, with extended weekend service until 2:00 AM.</p>  
-                    `  
-                },  
-                restaurant: {  
-                    title: "🍽️ The Heritage Tavern",  
-                    content: `  
-                        <h4>Restaurant Profile</h4>  
-                        <p>An established neighborhood restaurant serving classic American comfort food with a modern twist. Family-friendly atmosphere with a full bar and outdoor seating.</p>  
-                        
-                        <h4>Cuisine & Specialties</h4>  
-                        <ul>  
-                            <li><strong>Entrees:</strong> Grilled steaks, roasted chicken, fresh seafood</li>  
-                            <li><strong>Signature Dishes:</strong> Heritage burger, braised short ribs</li>  
-                            <li><strong>Bar:</strong> Craft cocktails, local beer selection, wine list</li>  
-                            <li><strong>Desserts:</strong> House-made pies and seasonal specialties</li>  
-                        </ul>  
-                        
-                        <h4>Dining Experience</h4>  
-                        <p>Warm wood interior, friendly service, and consistent quality have made this a neighborhood favorite for over 15 years.</p>  
-                    `  
-                }  
-            },  
-            
-            // Downtown Data  
-            'downtown': {  
-                office: {  
-                    title: "🏢 Corporate Tower",  
-                    content: `  
-                        <h4>Building Profile</h4>  
-                        <p>A 25-story modern office building housing various businesses, from startups to established corporations. Features state-of-the-art facilities and sustainable design elements.</p>  
-                        
-                        <h4>Tenants & Services</h4>  
-                        <ul>  
-                            <li><strong>Floors 1-5:</strong> Retail and banking services</li>  
-                            <li><strong>Floors 6-15:</strong> Mid-size companies and professional services</li>  
-                            <li><strong>Floors 16-25:</strong> Corporate headquarters and executive suites</li>  
-                            <li><strong>Amenities:</strong> Conference center, fitness facility, parking garage</li>  
-                        </ul>  
-                    `  
-                },  
-                mall: {  
-                    title: "🛍️ Downtown Shopping Center",  
-                    content: `  
-                        <h4>Shopping Destination</h4>  
-                        <p>A multi-level shopping center with over 150 stores, restaurants, and entertainment venues. The anchor of downtown's retail district.</p>  
-                        
-                        <h4>Store Categories</h4>  
-                        <ul>  
-                            <li><strong>Department Stores:</strong> Major retail chains and boutiques</li>  
-                            <li><strong>Dining:</strong> Food court plus full-service restaurants</li>  
-                            <li><strong>Entertainment:</strong> Movie theater, arcade, bowling</li>  
-                            <li><strong>Services:</strong> Banks, phone repair, salon services</li>  
-                        </ul>  
-                    `  
-                },  
-                hotel: {  
-                    title: "🏨 Grand Plaza Hotel",  
-                    content: `  
-                        <h4>Luxury Accommodation</h4>  
-                        <p>A 4-star business hotel offering premium accommodations and event facilities. Popular with business travelers and tourists exploring the city.</p>  
-                        
-                        <h4>Hotel Features</h4>  
-                        <ul>  
-                            <li><strong>Rooms:</strong> 200 guest rooms and suites</li>  
-                            <li><strong>Dining:</strong> Fine dining restaurant and lobby bar</li>  
-                            <li><strong>Facilities:</strong> Pool, spa, business center, ballroom</li>  
-                            <li><strong>Location:</strong> Walking distance to major attractions</li>  
-                        </ul>  
-                    `  
-                }  
-            },  
-            
-            // Suburbs Data  
-            'suburbs': {  
-                school: {  
-                    title: "🏫 Meadowbrook Elementary",  
-                    content: `  
-                        <h4>Educational Institution</h4>  
-                        <p>A well-regarded public elementary school serving grades K-5. Known for its innovative teaching methods and strong community involvement.</p>  
-                        
-                        <h4>School Features</h4>  
-                        <ul>  
-                            <li><strong>Programs:</strong> STEM focus, arts integration, ESL support</li>  
-                            <li><strong>Facilities:</strong> Computer lab, library, gymnasium, playground</li>  
-                            <li><strong>Community:</strong> Active PTA, volunteer programs</li>  
-                            <li><strong>Enrollment:</strong> Approximately 400 students</li>  
-                        </ul>  
-                    `  
-                },  
-                house: {  
-                    title: "🏡 Residential Neighborhood",  
-                    content: `  
-                        <h4>Community Profile</h4>  
-                        <p>A quiet suburban neighborhood with single-family homes, tree-lined streets, and well-maintained properties. Popular with families and professionals.</p>  
-                        
-                        <h4>Neighborhood Features</h4>  
-                        <ul>  
-                            <li><strong>Housing:</strong> Mix of ranch and two-story homes</li>  
-                            <li><strong>Amenities:</strong> Sidewalks, street lighting, underground utilities</li>  
-                            <li><strong>Community:</strong> Neighborhood watch, annual block parties</li>  
-                            <li><strong>Transportation:</strong> Bus routes to downtown and metro</li>  
-                        </ul>  
-                    `  
-                }  
-            }  
-        };  
-    },  
-    
-    // Add navigation page effects  
-    addNavigationEffects: function() {  
-        // Add parallax effect to navigation cards  
-        const mapCards = document.querySelectorAll('.map-card');  
-        mapCards.forEach(card => {  
-            card.addEventListener('mousemove', (e) => {  
-                const rect = card.getBoundingClientRect();  
-                const x = e.clientX - rect.left;  
-                const y = e.clientY - rect.top;  
-                
-                const centerX = rect.width / 2;  
-                const centerY = rect.height / 2;  
-                
-                const rotateX = (y - centerY) / 10;  
-                const rotateY = (centerX - x) / 10;  
-                
-                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px)`;  
-            });  
-            
-            card.addEventListener('mouseleave', () => {  
-                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';  
-            });  
-        });  
-        
-        // Add typing effect to title  
-        this.addTypingEffect();  
-    },  
-    
-    // Initialize map interactions  
-    initializeMapInteractions: function() {  
-        // Add click events to all location elements  
-        const locations = document.querySelectorAll('.location[data-location]');  
-        locations.forEach(location => {  
-            location.addEventListener('click', (e) => {  
-                e.preventDefault();  
-                const locationId = location.getAttribute('data-location');  
-                const mapType = this.getCurrentMapType();  
-                this.showInfo(locationId, mapType);  
-            });  
-            
-            // Add hover effects  
-            location.addEventListener('mouseenter', () => {  
-                this.addHoverEffect(location);  
-            });  
-            
-            location.addEventListener('mouseleave', () => {  
-                this.removeHoverEffect(location);  
-            });  
-        });  
-        
-        // Add legend interactions  
-        this.initializeLegend();  
-    },  
-    
-    // Get current map type from page  
-    getCurrentMapType: function() {  
-        const path = window.location.pathname;  
-        if (path.includes('old-town')) return 'old-town';  
-        if (path.includes('downtown')) return 'downtown';  
-        if (path.includes('suburbs')) return 'suburbs';  
-        return 'old-town'; // default  
-    },  
-    
-    // Create popup elements if they don't exist
-    createPopupElements: function() {
-        // Check if overlay exists
-        if (!document.querySelector('.overlay')) {
-            const overlay = document.createElement('div');
-            overlay.className = 'overlay';
-            document.body.appendChild(overlay);
-            
-            // Add click event to close popup
-            overlay.addEventListener('click', () => this.closeInfo());
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Old Town District Interactive Map</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
-        // Check if popup exists
-        if (!document.querySelector('.info-popup')) {
-            const popup = document.createElement('div');
-            popup.className = 'info-popup';
-            document.body.appendChild(popup);
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
-    },
-    
-    // Show location information popup  
-    showInfo: function(locationId, mapType) {  
-        const locationData = this.locationData[mapType] && this.locationData[mapType][locationId];  
         
-        if (!locationData) {  
-            console.warn(`No data found for location: ${locationId} in map: ${mapType}`);  
-            return;  
-        }  
+        .map-container {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1400px;
+            width: 100%;
+        }
         
-        // Create popup if it doesn't exist  
-        this.createPopupElements();  
+        .map-title {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 32px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
         
-        // Update popup content  
-        const popup = document.querySelector('.info-popup');  
-        const overlay = document.querySelector('.overlay');  
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(6, 110px);
+            gap: 12px;
+            position: relative;
+            background: #fff;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 700px;
+        }
         
-        popup.innerHTML = `  
-            <button class="close-btn" onclick="MapSystem.closeInfo()">×</button>  
-            <div class="popup-header">  
-                <h3>${locationData.title}</h3>  
-            </div>  
-            <div class="popup-content">  
-                ${locationData.content}  
-            </div>  
-        `;  
+        /* Streets */
+        .street {
+            position: absolute;
+            background: #c0c0c0;
+            z-index: 1;
+        }
         
-        // Show popup with animation  
-        overlay.classList.add('active');  
-        popup.classList.add('active');  
+        .main-commercial {
+            top: 65%;
+            left: 5%;
+            right: 5%;
+            height: 45px;
+            background: linear-gradient(90deg, #a8a8a8 0%, #a8a8a8 45%, #ffd700 50%, #a8a8a8 55%, #a8a8a8 100%);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
         
-        this.activePopup = popup;  
+        .main-road {
+            bottom: 15%;
+            left: 5%;
+            right: 5%;
+            height: 45px;
+            background: linear-gradient(90deg, #a8a8a8 0%, #a8a8a8 45%, #fff 50%, #a8a8a8 55%, #a8a8a8 100%);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
         
-        // Prevent body scrolling  
-        document.body.style.overflow = 'hidden';  
-    },  
-    
-    // Close information popup  
-    closeInfo: function() {  
-        const popup = document.querySelector('.info-popup');  
-        const overlay = document.querySelector('.overlay');  
+        .residential-street-1 {
+            top: 5%;
+            bottom: 5%;
+            left: 18%;
+            width: 35px;
+            background: linear-gradient(180deg, #d4d4d4 0%, #b8e6b8 50%, #d4d4d4 100%);
+        }
         
-        if (popup && overlay) {  
-            popup.classList.remove('active');  
-            overlay.classList.remove('active');  
-        }  
+        .residential-street-2 {
+            top: 5%;
+            bottom: 5%;
+            right: 25%;
+            width: 35px;
+            background: linear-gradient(180deg, #d4d4d4 0%, #b8e6b8 50%, #d4d4d4 100%);
+        }
         
-        this.activePopup = null;  
+        .artistic-quarter-street {
+            top: 5%;
+            bottom: 5%;
+            left: 60%;
+            width: 30px;
+            background: linear-gradient(180deg, #e6d4ff 0%, #d4d4d4 50%, #e6d4ff 100%);
+        }
         
-        // Restore body scrolling
-        document.body.style.overflow = '';
-    },
-    
-    // Add hover effect to location elements
-    addHoverEffect: function(element) {
-        element.style.transform = 'scale(1.1)';
-        element.style.zIndex = '10';
-        element.style.filter = 'brightness(1.2)';
-        element.style.transition = `all ${this.animationSettings.hoverDelay}ms ease`;
+        /* Locations */
+        .location {
+            background: white;
+            border-radius: 12px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 2px solid transparent;
+            overflow: hidden;
+        }
         
-        // Add glow effect
-        element.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.6)';
-    },
-    
-    // Remove hover effect from location elements
-    removeHoverEffect: function(element) {
-        element.style.transform = 'scale(1)';
-        element.style.zIndex = '';
-        element.style.filter = '';
-        element.style.boxShadow = '';
-    },
-    
-    // Handle window resize
-    handleResize: function() {
-        if (this.activePopup) {
-            // Reposition popup if needed
-            const popup = document.querySelector('.info-popup');
-            if (popup) {
-                // Center the popup
-                const rect = popup.getBoundingClientRect();
-                if (rect.height > window.innerHeight * 0.9) {
-                    popup.style.height = '90vh';
-                    popup.style.overflowY = 'auto';
-                }
+        .location::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: inherit;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+        
+        .location:hover {
+            transform: translateY(-8px) scale(1.08);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            z-index: 20;
+        }
+        
+        .location:hover::before {
+            opacity: 0.1;
+        }
+        
+        .location-icon {
+            font-size: 28px;
+            margin-bottom: 5px;
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.2));
+        }
+        
+        .location-name {
+            font-size: 11px;
+            text-align: center;
+            font-weight: 700;
+            color: #2c3e50;
+            line-height: 1.2;
+        }
+        
+        .location-desc {
+            font-size: 9px;
+            color: #7f8c8d;
+            text-align: center;
+            margin-top: 3px;
+            font-style: italic;
+        }
+        
+        /* Central Park */
+        .park {
+            grid-column: 2 / 5;
+            grid-row: 2 / 5;
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+            border: 3px solid #27ae60;
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
+        }
+        
+        .park .location-icon {
+            font-size: 48px;
+        }
+        
+        .park .location-name {
+            font-size: 16px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .park .location-desc {
+            font-size: 12px;
+            color: #ecf0f1;
+        }
+        
+        /* Mixed Use Building */
+        .mixed-use {
+            grid-column: 5;
+            grid-row: 5;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 2px solid #5f3dc4;
+            position: relative;
+            padding-top: 15px;
+        }
+        
+        .mixed-use .location-icon {
+            font-size: 24px;
+        }
+        
+        .mixed-use .location-name {
+            font-size: 10px;
+            color: white;
+        }
+        
+        .mixed-use .location-desc {
+            color: #e0e0ff;
+            font-size: 8px;
+        }
+        
+        .floor-indicator {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255,255,255,0.9);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 8px;
+            font-weight: bold;
+            color: #5f3dc4;
+        }
+        
+        /* Category Styles */
+        .commercial {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-color: #e67e22;
+        }
+        
+        .residential {
+            background: linear-gradient(135deg, #e3ffe7 0%, #d9e7ff 100%);
+            border-color: #3498db;
+        }
+        
+        .food {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            border-color: #e91e63;
+        }
+        
+        .civic {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border-color: #9b59b6;
+        }
+        
+        .entertainment {
+            background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+            border-color: #8e44ad;
+        }
+        
+        .transit {
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            border-color: #34495e;
+        }
+        
+        .retail {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-color: #ec407a;
+        }
+        
+        /* Grid Positioning */
+        .convenience-store { 
+            grid-column: 6; 
+            grid-row: 4; 
+        }
+        
+        .sweet-time { 
+            grid-column: 3; 
+            grid-row: 5; 
+        }
+        
+        .pharmacy { 
+            grid-column: 6; 
+            grid-row: 6; 
+        }
+        
+        .metro { 
+            grid-column: 5; 
+            grid-row: 6; 
+        }
+        
+        .music-shop { 
+            grid-column: 4; 
+            grid-row: 1; 
+        }
+        
+        .pottery-studio {
+            grid-column: 3;
+            grid-row: 1;
+        }
+        
+        .internet-cafe { 
+            grid-column: 5; 
+            grid-row: 1; 
+        }
+        
+        .aria-home { 
+            grid-column: 1; 
+            grid-row: 2; 
+        }
+        
+        .ricos { 
+            grid-column: 1; 
+            grid-row: 3; 
+        }
+        
+        /* Legend */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            background: #f8f9fa;
+            transition: all 0.2s ease;
+        }
+        
+        .legend-item:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+        
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: 2px solid;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* Info Popup */
+        .info-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+            display: none;
+            z-index: 100;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .info-popup.active {
+            display: block;
+            animation: popIn 0.3s ease;
+        }
+        
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
             }
         }
-    },
+        
+        .info-popup h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-popup h4 {
+            margin-top: 15px;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-size: 16px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 5px;
+        }
+        
+        .info-popup ul {
+            margin-left: 20px;
+            color: #7f8c8d;
+            line-height: 1.8;
+        }
+        
+        .info-popup p {
+            color: #7f8c8d;
+            line-height: 1.8;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s ease;
+        }
+        
+        .close-btn:hover {
+            background: #c0392b;
+            transform: rotate(90deg);
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            display: none;
+            z-index: 99;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+        
+        /* Small location label */
+        .small-label {
+            font-size: 8px;
+            color: #95a5a6;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="map-container">
+        <h1 class="map-title">🗺️ Old Town District - Lumina City</h1>
+        
+        <div class="map-grid">
+            <!-- Streets -->
+            <div class="street main-commercial"></div>
+            <div class="street main-road"></div>
+            <div class="street residential-street-1"></div>
+            <div class="street residential-street-2"></div>
+            <div class="street artistic-quarter-street"></div>
+            
+            <!-- Central Park -->
+            <div class="location park" onclick="showInfo('park')">
+                <div class="location-icon">🌳</div>
+                <div class="location-name">Public Park</div>
+                <div class="location-desc">Central green space • Artificial lake • Playground</div>
+            </div>
+            
+            <!-- Residential Area -->
+            <div class="location residential aria-home" onclick="showInfo('aria')">
+                <div class="location-icon">🏠</div>
+                <div class="location-name">Aria's Apartment</div>
+                <div class="location-desc">Modest rental • Near metro</div>
+            </div>
+            
+            <div class="location food ricos" onclick="showInfo('ricos')">
+                <div class="location-icon">🍴</div>
+                <div class="location-name">The Rico's</div>
+                <div class="location-desc">Family restaurant • Local favorite</div>
+            </div>
+            
+            <!-- Commercial Street -->
+            <div class="location food sweet-time" onclick="showInfo('sweet')">
+                <div class="location-icon">🍰</div>
+                <div class="location-name">Sweet Time Dessert</div>
+                <div class="location-desc">Dessert shop • Bus stop nearby</div>
+            </div>
+            
+            <div class="location commercial convenience-store" onclick="showInfo('convenience')">
+                <div class="location-icon">🏪</div>
+                <div class="location-name">Convenience Store</div>
+                <div class="location-desc">24/7 • Corner location • ATM</div>
+            </div>
+            
+            <!-- Mixed Use Building -->
+            <div class="location mixed-use" onclick="showInfo('mixed')">
+                <div class="floor-indicator">3 Floors</div>
+                <div class="location-icon">🏢</div>
+                <div class="location-name">Mixed-Use Building</div>
+                <div class="location-desc">Post Office (F1-2) • Rooftop Bar (F3)</div>
+            </div>
+            
+            <!-- Main Road -->
+            <div class="location civic pharmacy" onclick="showInfo('pharmacy')">
+                <div class="location-icon">💊</div>
+                <div class="location-name">Pharmacy</div>
+                <div class="location-desc">Medical building • Near metro</div>
+            </div>
+            
+            <!-- Artistic Quarter -->
+            <div class="location entertainment pottery-studio" onclick="showInfo('pottery')">
+                <div class="location-icon">🏺</div>
+                <div class="location-name">Pottery Studio</div>
+                <div class="location-desc">Artisan workshop</div>
+            </div>
+            
+            <div class="location entertainment music-shop" onclick="showInfo('music')">
+                <div class="location-icon">🎵</div>
+                <div class="location-name">Music Shop</div>
+                <div class="location-desc">Traditional instruments</div>
+            </div>
+            
+            <div class="location entertainment internet-cafe" onclick="showInfo('internet')">
+                <div class="location-icon">💻</div>
+                <div class="location-name">Internet Café</div>
+                <div class="location-desc">Gaming hub • Night hotspot</div>
+            </div>
+            
+            <!-- Transit -->
+            <div class="location transit metro" onclick="showInfo('metro')">
+                <div class="location-icon">🚇</div>
+                <div class="location-name">Metro Station</div>
+                <div class="location-desc">Underground transit hub</div>
+            </div>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%); border-color: #27ae60;"></div>
+                <span>Public Park</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-color: #5f3dc4;"></div>
+                <span>Mixed-Use Building</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); border-color: #e67e22;"></div>
+                <span>Commercial</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #e3ffe7 0%, #d9e7ff 100%); border-color: #3498db;"></div>
+                <span>Residential</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); border-color: #e91e63;"></div>
+                <span>Food & Dining</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); border-color: #9b59b6;"></div>
+                <span>Civic Services</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%); border-color: #8e44ad;"></div>
+                <span>Entertainment</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); border-color: #34495e;"></div>
+                <span>Transit</span>
+            </div>
+        </div>
+    </div>
     
-    // Add typing effect to title
-    addTypingEffect: function() {
-        const title = document.querySelector('.typing-effect');
-        if (!title) return;
-        
-        const text = title.textContent;
-        title.textContent = '';
-        title.style.visibility = 'visible';
-        
-        let index = 0;
-        const typeWriter = () => {
-            if (index < text.length) {
-                title.textContent += text.charAt(index);
-                index++;
-                setTimeout(typeWriter, 100);
-            } else {
-                // Add blinking cursor
-                title.innerHTML += '<span class="cursor">|</span>';
+    <div class="overlay" onclick="closeInfo()"></div>
+    
+    <div class="info-popup" id="infoPopup">
+        <button class="close-btn" onclick="closeInfo()">×</button>
+        <h3 id="infoTitle"></h3>
+        <div id="infoContent"></div>
+    </div>
+    
+    <script>
+        const locationInfo = {
+            park: {
+                title: "🌳 Public Park",
+                content: `
+                    <h4>Location & Environment</h4>
+                    <p>The Public Park occupies the largest block in the Old Town center, surrounded by residential streets on three sides and the main commercial avenue on the fourth. Mature maple and oak trees line the roads, with a small artificial lake positioned off-center. Low wrought iron fencing surrounds the perimeter, with stone paths radiating from the lake to multiple entrances.</p>
+                    
+                    <h4>Features & Atmosphere</h4>
+                    <ul>
+                        <li><strong>Lake:</strong> Small artificial pond with weathered wooden pier extending into water, benches facing the water view</li>
+                        <li><strong>Paths:</strong> Worn concrete walkways showing age cracks, some sections retain original cobblestones</li>
+                        <li><strong>Seating:</strong> Mix of green-painted metal park benches (some with peeling paint) and picnic tables</li>
+                        <li><strong>Playground:</strong> Swings, slides, climbing frames showing wear from years of use</li>
+                        <li><strong>Lighting:</strong> Tall park lamp posts with frosted globe shades, some flickering or needing maintenance</li>
+                        <li><strong>Landscaping:</strong> Naturally growing wildflowers rather than manicured gardens, grass with patches of weeds, scattered fallen leaves</li>
+                        <li><strong>Activity Area:</strong> Rust-spotted public exercise equipment, jogging path circling the perimeter</li>
+                        <li><strong>Maintenance:</strong> Generally clean but showing age - some overflowing trash bins, occasional graffiti on facilities</li>
+                    </ul>
+                `
+            },
+            mixed: {
+                title: "🏢 Mixed-Use Building",
+                content: `
+                    <p>This three-story mixed-use building houses both the Post Office (floors 1-2) and the Rooftop Bar (floor 3). Located at a busy corner with government offices nearby.</p>
+                    
+                    <h4>Post Office (Floors 1-2)</h4>
+                    <p><strong>Location:</strong> Ground and second floor, busy corner location with official postal service signage on large street-facing windows. Concrete steps lead to main entrance, adjacent to convenience store and medical building.</p>
+                    <ul>
+                        <li><strong>Layout:</strong> Open floor plan with customer service area separated by chest-high counters</li>
+                        <li><strong>Flooring:</strong> Beige/gray patterned institutional linoleum, heavy wear patterns visible</li>
+                        <li><strong>Lighting:</strong> Fluorescent overhead fixtures, some buzzing or flickering</li>
+                        <li><strong>Service Counter:</strong> Long wooden counter with brass fixtures, multiple windows with reinforced glass</li>
+                        <li><strong>Queue System:</strong> Rope barriers and floor markings, plastic benches for waiting</li>
+                        <li><strong>Wall Features:</strong> Government notices, postal service posters, cork board with community announcements</li>
+                        <li><strong>Functional Areas:</strong> Mail sorting area visible behind counter, weighing stations, computer terminals</li>
+                        <li><strong>Atmosphere:</strong> Institutional efficiency, occasionally crowded during lunch hours, sounds of stamp machines and printers</li>
+                    </ul>
+                    
+                    <h4>Rooftop Bar (Floor 3)</h4>
+                    <p><strong>Access:</strong> Via narrow external staircase on building side or internal stairway through postal service area. Converted from building equipment platform.</p>
+                    <ul>
+                        <li><strong>Flooring:</strong> Weathered wooden decking, outdoor rugs at entrance</li>
+                        <li><strong>Seating:</strong> Eclectic mix of salvaged furniture (metal chairs, wooden tables), some cushioned lounge areas with weather-resistant fabric</li>
+                        <li><strong>Bar Area:</strong> Converted from shipping container or small prefab structure, exposed string lights overhead</li>
+                        <li><strong>Lighting:</strong> Crisscrossing warm-toned string lights overhead, lanterns on tables, LED strips along railings</li>
+                        <li><strong>Safety:</strong> Waist-high perimeter railings, partial plexiglass wind screens</li>
+                        <li><strong>Ambiance Details:</strong> Potted plants, vintage neon signs, fabric canopies for rain protection</li>
+                        <li><strong>Views:</strong> 360-degree panorama of Old Town's terracotta rooftops, TV antennas, clotheslines, with modern city skyline in background</li>
+                    </ul>
+                `
+            },
+            aria: {
+                title: "🏠 Aria's Apartment",
+                content: `
+                    <h4>Location & Environment</h4>
+                    <p>Located in a quiet residential area in a modest small rental apartment building. Uncomfortable but affordable. Aria chose this place for its proximity to the metro and low rent, allowing her to save money to support her father.</p>
+                    
+                    <h4>Interior Design</h4>
+                    <ul>
+                        <li><strong>Living Room:</strong> Cramped space with basic rental furniture, minimal personal items, laptop and performance props on coffee table</li>
+                        <li><strong>Bedroom:</strong> Single bed, small wardrobe, practice mirror on wall, scripts and audition materials scattered around</li>
+                        <li><strong>Kitchen:</strong> Narrow galley kitchen with basic appliances, evidence of simple cooking, groceries often bought for both herself and father</li>
+                        <li><strong>Personal Touches:</strong> Limited decoration due to rental status and frequent moves, only some childhood photos and mother's books</li>
+                        <li><strong>Overall Condition:</strong> Clean but austere, reflects financial pressure, repairs handled by landlord when necessary</li>
+                        <li><strong>Atmosphere:</strong> Temporary feeling, functional rather than homey, visible signs of someone working hard while caring for parent</li>
+                    </ul>
+                `
+            },
+            ricos: {
+                title: "🍴 The Rico's Restaurant",
+                content: `
+                    <h4>Location & Environment</h4>
+                    <p>Located on a side street one block from Aria's apartment, occupying the ground floor of a converted residential building. Small outdoor seating area with 2-3 tables during good weather. Neighborhood location means mostly local customers who walk there.</p>
+                    
+                    <h4>Interior Design</h4>
+                    <ul>
+                        <li><strong>Layout:</strong> Small dining room with 8-10 mismatched tables, open kitchen visible from dining area</li>
+                        <li><strong>Flooring:</strong> Original hardwood with area rugs, some boards creak when walked on</li>
+                        <li><strong>Lighting:</strong> Warm overhead lights, table lamps for intimate atmosphere</li>
+                        <li><strong>Seating:</strong> Collection of different chairs and tables accumulated over years, some wobbly but comfortable</li>
+                        <li><strong>Wall Decor:</strong> Family photos of regulars, local sports team memorabilia, handwritten menu boards</li>
+                        <li><strong>Kitchen View:</strong> Visible home-style cooking equipment, large pots simmering, family recipes passed down</li>
+                        <li><strong>Service Style:</strong> Counter service or family-style table service depending on crowd</li>
+                        <li><strong>Atmosphere:</strong> Genuine warmth, conversations between tables, home cooking smells, feels like eating at someone's home restaurant</li>
+                    </ul>
+                `
+            },
+            sweet: {
+                title: "🍰 Sweet Time Dessert",
+                content: `
+                    <h4>Location & Environment</h4>
+                    <p>Sits on the main commercial street between a small family-run Italian restaurant and a vintage clothing boutique. Converted ground-floor space of a 3-story brick structure with apartments above. Bus stop visible across the street, limited street parking with delivery vehicles typically parked nearby during morning hours.</p>
+                    
+                    <h4>Interior Design</h4>
+                    <p>Cozy dessert shop with display cases showcasing daily selections, small seating area with mismatched vintage furniture, warm lighting creating inviting atmosphere for afternoon treats and coffee.</p>
+                `
+            },
+            convenience: {
+                title: "🏪 Convenience Store",
+                content: `
+                    <h4>Location & Environment</h4>
+                    <p>Prime corner location where two main streets intersect, maximizing visibility and foot traffic. Large plate glass windows on two sides, entrance positioned at corner angle. Exterior includes ATM machine, newspaper stands, and small covered area for shopping carts.</p>
+                    
+                    <h4>Interior Design</h4>
+                    <ul>
+                        <li><strong>Layout:</strong> Efficient grid system with narrow aisles maximizing shelf space</li>
+                        <li><strong>Flooring:</strong> Commercial-grade vinyl tiles, easy to clean, worn fixtures and walls</li>
+                        <li><strong>Lighting:</strong> Bright fluorescent overhead lights, LED strips in coolers, neon signs in beverage section</li>
+                        <li><strong>Shelving:</strong> Metal shelving units, refrigerated cases along walls, impulse items near checkout</li>
+                        <li><strong>Checkout Area:</strong> Counter with lottery machine, cigarette display behind counter, magazine rack</li>
+                        <li><strong>Security:</strong> Convex mirrors in corners, security camera system, reinforced cashier area</li>
+                        <li><strong>Atmosphere:</strong> 24/7 busy energy, coffee machine sounds, occasional delivery truck noise, mix of regulars and late-night visitors</li>
+                    </ul>
+                `
+            },
+            pharmacy: {
+                title: "💊 Pharmacy",
+                content: `
+                    <h4>Location & Environment</h4>
+                    <p>Strategically located on main road with metro station directly outside, making it accessible for residents throughout Old Town. Ground floor of medical building also housing dental office and optometrist. Large windows display health and wellness advertisements.</p>
+                    
+                    <h4>Interior Design</h4>
+                    <ul>
+                        <li><strong>Layout:</strong> Traditional pharmacy counter in back, retail area in front with health and beauty products</li>
+                        <li><strong>Flooring:</strong> Clean linoleum with non-slip texture</li>
+                        <li><strong>Lighting:</strong> Bright fluorescent for reading labels, softer lighting in consultation area</li>
+                        <li><strong>Shelving:</strong> Tall shelves organized by category, locked cabinets for controlled medications</li>
+                        <li><strong>Consultation Area:</strong> Private corner with chairs, blood pressure monitoring station</li>
+                        <li><strong>Counter Area:</strong> Raised counter with computer terminals, cash register, prescription pickup system</li>
+                        <li><strong>Waiting Area:</strong> Few plastic chairs, health publication rack, water dispenser</li>
+                        <li><strong>Atmosphere:</strong> Professional staff with friendly demeanor</li>
+                    </ul>
+                `
+            },
+            music: {
+                title: "🎵 Traditional Music Instrument Shop",
+                content: `
+                    <h4>Location & Environment</h4>
+                    <p>Located on a quiet side street in the artistic quarter, flanked by a small pottery studio and internet café. Narrow storefront fits into converted ground floor of 19th-century row house. Minimal foot traffic creates peaceful browsing environment.</p>
+                    
+                    <h4>Interior Design</h4>
+                    <ul>
+                        <li><strong>Layout:</strong> Long narrow space with instruments displayed along walls and hanging from ceiling</li>
+                        <li><strong>Flooring:</strong> Original hardwood with scattered Persian-style rugs</li>
+                        <li><strong>Lighting:</strong> Warm incandescent bulbs in vintage fixtures, natural light from front window</li>
+                        <li><strong>Display:</strong> Wall-mounted brackets for guitars and string instruments, glass cases for delicate items</li>
+                        <li><strong>Testing Area:</strong> Corner with stool and music stand for trying instruments</li>
+                        <li><strong>Wall Decor:</strong> Sheet music wallpaper, vintage concert posters, obscure band photographs</li>
+                        <li><strong>Ambiance Details:</strong> Dust motes in afternoon sunlight, smell of wood polish and old leather, cat napping in sunny window</li>
+                    </ul>
+                `
+            },
+            internet: {
+                title: "💻 Internet Café",
+                content: `
+                    <h4>Location & Environment</h4>
+                    <p>Located next to traditional music shop on corner near main road. Area becomes lively in evening with younger crowd gathering. Neon signs visible from street, entrance often has teenagers or young adults congregating outside.</p>
+                    
+                    <h4>Interior Design</h4>
+                    <ul>
+                        <li><strong>Layout:</strong> Rows of computer stations separated by low partitions</li>
+                        <li><strong>Flooring:</strong> Dark carpet to hide wear and stains, some patched areas</li>
+                        <li><strong>Lighting:</strong> Mix of computer screen glow and fluorescent overhead, colored LED strips at gaming stations</li>
+                        <li><strong>Seating:</strong> Basic office chairs in varying states of repair, some patched with tape</li>
+                        <li><strong>Gaming Area:</strong> High-end computers with gaming peripherals, larger monitors, headphone hooks</li>
+                        <li><strong>Service Desk:</strong> Snacks and drinks for sale, time tracking system, payment terminal</li>
+                        <li><strong>Sound Environment:</strong> Keyboard clicking, muffled game sounds through headphones, occasional excited shouts from gamers</li>
+                        <li><strong>Atmosphere:</strong> Peak energy during evening hours, smell of instant noodles and energy drinks</li>
+                    </ul>
+                `
+            },
+            metro: {
+                title: "🚇 Metro Station",
+                content: `
+                    <h4>Location & Environment</h4>
+                    <p>Underground transit station with multiple platform levels connecting Old Town to other city districts. Busy during rush hours with commuters, street musicians often perform near entrances.</p>
+                    
+                    <h4>Features</h4>
+                    <p>Multiple entrances with stairs and escalators, tiled walls showing age, fluorescent lighting throughout, electronic departure boards, ticket machines and gates, underground passages connecting platforms.</p>
+                `
+            },
+            pottery: {
+                title: "🏺 Pottery Studio",
+                content: `
+                    <h4>Location & Environment</h4>
+                    <p>Small artisan workshop in the artistic quarter, neighboring the traditional music shop. Ground floor studio with large windows displaying handmade ceramics.</p>
+                    
+                    <h4>Features</h4>
+                    <p>Working pottery wheels visible through window, shelves of finished and drying pieces, kiln in back room, clay-dusted floors, earthy atmosphere with creative energy.</p>
+                `
             }
         };
         
-        setTimeout(typeWriter, 500);
-    },
-    
-    // Initialize legend interactions
-    initializeLegend: function() {
-        const legendItems = document.querySelectorAll('.legend-item');
-        legendItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const category = item.getAttribute('data-category');
-                this.filterLocationsByCategory(category);
-            });
-            
-            item.addEventListener('mouseenter', () => {
-                const category = item.getAttribute('data-category');
-                this.highlightLocationsByCategory(category);
-            });
-            
-            item.addEventListener('mouseleave', () => {
-                this.clearHighlights();
-            });
-        });
-    },
-    
-    // Filter locations by category
-    filterLocationsByCategory: function(category) {
-        const locations = document.querySelectorAll('.location');
-        locations.forEach(location => {
-            const locationCategory = location.getAttribute('data-category');
-            if (category === 'all' || locationCategory === category) {
-                location.style.display = 'block';
-                location.style.opacity = '1';
-            } else {
-                location.style.opacity = '0.3';
+        function showInfo(location) {
+            const info = locationInfo[location];
+            document.getElementById('infoTitle').innerHTML = info.title;
+            document.getElementById('infoContent').innerHTML = info.content;
+            document.getElementById('infoPopup').classList.add('active');
+            document.querySelector('.overlay').classList.add('active');
+        }
+        
+        function closeInfo() {
+            document.getElementById('infoPopup').classList.remove('active');
+            document.querySelector('.overlay').classList.remove('active');
+        }
+        
+        // Add keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeInfo();
             }
         });
-    },
-    
-    // Highlight locations by category
-    highlightLocationsByCategory: function(category) {
-        const locations = document.querySelectorAll('.location');
-        locations.forEach(location => {
-            const locationCategory = location.getAttribute('data-category');
-            if (locationCategory === category) {
-                this.addHoverEffect(location);
-            }
-        });
-    },
-    
-    // Clear all highlights
-    clearHighlights: function() {
-        const locations = document.querySelectorAll('.location');
-        locations.forEach(location => {
-            this.removeHoverEffect(location);
-            location.style.opacity = '1';
-        });
-    },
-    
-    // Utility function to add smooth scrolling
-    smoothScrollTo: function(element) {
-        if (element) {
-            element.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
-            });
-        }
-    },
-    
-    // Add loading animation
-    showLoading: function() {
-        const loader = document.createElement('div');
-        loader.className = 'loading-overlay';
-        loader.innerHTML = `
-            <div class="loading-spinner">
-                <div class="spinner"></div>
-                <p>Loading map data...</p>
-            </div>
-        `;
-        document.body.appendChild(loader);
-    },
-    
-    // Remove loading animation
-    hideLoading: function() {
-        const loader = document.querySelector('.loading-overlay');
-        if (loader) {
-            loader.remove();
-        }
-    }
-};  
-
-// ==============================================  
-// Initialize on page load  
-// ==============================================  
-document.addEventListener('DOMContentLoaded', function() {  
-    MapSystem.init();  
-});
-
-// ==============================================  
-// Export for use in other modules  
-// ==============================================  
-if (typeof module !== 'undefined' && module.exports) {  
-    module.exports = MapSystem;  
-}
+    </script>
+</body>
+</html>
