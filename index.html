@@ -1,134 +1,571 @@
-<!DOCTYPE html>  
-<html lang="zh">  
-<head>  
-    <meta charset="UTF-8">  
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-    <title>Lumina City Interactive Maps</title>  
-    <style>  
-        body {  
-            font-family: Arial, sans-serif;  
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);  
-            margin: 0;  
-            padding: 40px;  
-            min-height: 100vh;  
-        }  
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumina City - Interactive Map System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         
-        .container {  
-            max-width: 1200px;  
-            margin: 0 auto;  
-            background: white;  
-            border-radius: 20px;  
-            padding: 40px;  
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);  
-        }  
+        body {
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
         
-        .title {  
-            text-align: center;  
-            color: #2c3e50;  
-            font-size: 36px;  
-            margin-bottom: 40px;  
-        }  
+        .city-container {
+            background: rgba(20, 20, 35, 0.95);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 30px 100px rgba(0,0,0,0.5), 0 0 200px rgba(50,100,150,0.1);
+            max-width: 1600px;
+            width: 100%;
+            border: 1px solid rgba(100,150,200,0.2);
+        }
         
-        .maps-grid {  
-            display: grid;  
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));  
-            gap: 30px;  
-            margin-top: 40px;  
-        }  
+        .city-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
         
-        .map-card {  
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);  
-            border-radius: 15px;  
-            padding: 30px;  
-            text-align: center;  
-            transition: transform 0.3s ease;  
-            border: 2px solid transparent;  
-        }  
+        .city-title {
+            font-size: 48px;
+            font-weight: 300;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
         
-        .map-card:hover {  
-            transform: translateY(-10px);  
-            border-color: #667eea;  
-            box-shadow: 0 15px 40px rgba(0,0,0,0.2);  
-        }  
+        .city-subtitle {
+            color: #8899aa;
+            font-size: 18px;
+            letter-spacing: 1px;
+        }
         
-        .map-icon {  
-            font-size: 48px;  
-            margin-bottom: 20px;  
-        }  
+        .map-wrapper {
+            position: relative;
+            background: #0a0a15;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
         
-        .map-title {  
-            font-size: 24px;  
-            color: #2c3e50;  
-            margin-bottom: 15px;  
-        }  
+        .city-map {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            height: 700px;
+            margin: 0 auto;
+            background: radial-gradient(ellipse at center, rgba(50,100,150,0.1) 0%, transparent 70%);
+        }
         
-        .map-description {  
-            color: #7f8c8d;  
-            margin-bottom: 25px;  
-            line-height: 1.6;  
-        }  
+        /* District positioning and shapes */
+        .district {
+            position: absolute;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
         
-        .map-link {  
-            display: inline-block;  
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);  
-            color: white;  
-            padding: 12px 25px;  
-            border-radius: 25px;  
-            text-decoration: none;  
-            font-weight: bold;  
-            transition: all 0.3s ease;  
-        }  
+        .district::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.7;
+            z-index: -1;
+            transition: opacity 0.3s ease;
+        }
         
-        .map-link:hover {  
-            transform: scale(1.05);  
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);  
-        }  
-    </style>  
-</head>  
-<body>  
-    <div class="container">  
-        <h1 class="title">🗺️ Lumina City Interactive Maps</h1>  
-        <p style="text-align: center; color: #7f8c8d; font-size: 18px;">  
-            探索 Lumina City 的各个区域，点击下方地图开始您的旅程  
-        </p>  
+        .district:hover {
+            transform: translateY(-10px) scale(1.05);
+            z-index: 100;
+            border-color: rgba(255,255,255,0.6);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 100px currentColor;
+        }
         
-        <div class="maps-grid">  
-            <div class="map-card">  
-                <div class="map-icon">🏛️</div>  
-                <div class="map-title">老城区</div>  
-                <div class="map-description">  
-                    历史悠久的老城中心，包含公园、住宅区和传统商业街  
-                </div>  
-                <a href="old-town-map.html" class="map-link">查看地图</a>  
-            </div>  
+        .district:hover::before {
+            opacity: 0.9;
+        }
+        
+        .district-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 20px currentColor);
+        }
+        
+        .district-name {
+            font-size: 18px;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .district-desc {
+            font-size: 12px;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+        
+        /* Old Town - Northwest */
+        .old-town {
+            top: 15%;
+            left: 10%;
+            width: 280px;
+            height: 180px;
+            background: linear-gradient(135deg, #8B4513, #A0522D);
+        }
+        .old-town::before {
+            background: linear-gradient(135deg, #8B4513, #A0522D);
+        }
+        .old-town:hover {
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 80px rgba(160,82,45,0.6);
+        }
+        
+        /* University Area - North */
+        .university {
+            top: 8%;
+            left: 40%;
+            width: 250px;
+            height: 170px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+        }
+        .university::before {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+        }
+        .university:hover {
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 80px rgba(42,82,152,0.6);
+        }
+        
+        /* CBD Core - Center */
+        .cbd {
+            top: 35%;
+            left: 38%;
+            width: 300px;
+            height: 200px;
+            background: linear-gradient(135deg, #232526, #414345);
+            border: 2px solid rgba(100,150,255,0.4);
+        }
+        .cbd::before {
+            background: linear-gradient(135deg, #434343, #000000);
+        }
+        .cbd:hover {
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 100px rgba(100,100,255,0.8);
+        }
+        
+        /* Seaside - East */
+        .seaside {
+            top: 25%;
+            right: 8%;
+            width: 260px;
+            height: 180px;
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+        }
+        .seaside::before {
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+        }
+        .seaside:hover {
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 80px rgba(0,114,255,0.6);
+        }
+        
+        /* Entertainment Industry - Southwest */
+        .entertainment-industry {
+            bottom: 12%;
+            left: 8%;
+            width: 280px;
+            height: 170px;
+            background: linear-gradient(135deg, #f953c6, #b91d73);
+        }
+        .entertainment-industry::before {
+            background: linear-gradient(135deg, #f953c6, #b91d73);
+        }
+        .entertainment-industry:hover {
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 80px rgba(249,83,198,0.6);
+        }
+        
+        /* Leisure Entertainment - Southeast */
+        .leisure {
+            bottom: 10%;
+            right: 12%;
+            width: 270px;
+            height: 160px;
+            background: linear-gradient(135deg, #f2994a, #f2c94c);
+        }
+        .leisure::before {
+            background: linear-gradient(135deg, #f2994a, #f2c94c);
+        }
+        .leisure:hover {
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 80px rgba(242,201,76,0.6);
+        }
+        
+        /* Connecting lines/roads */
+        .road {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            z-index: 0;
+        }
+        
+        .road-horizontal {
+            top: 50%;
+            left: 5%;
+            right: 5%;
+            height: 2px;
+            transform: translateY(-50%);
+        }
+        
+        .road-vertical {
+            left: 50%;
+            top: 10%;
+            bottom: 10%;
+            width: 2px;
+            transform: translateX(-50%);
+        }
+        
+        /* Status indicators */
+        .status-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .status-available {
+            background: rgba(76,175,80,0.3);
+            border: 1px solid #4caf50;
+            color: #4caf50;
+        }
+        
+        .status-coming {
+            background: rgba(255,193,7,0.3);
+            border: 1px solid #ffc107;
+            color: #ffc107;
+        }
+        
+        /* Info panel */
+        .info-panel {
+            margin-top: 40px;
+            padding: 25px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .info-title {
+            color: #88aaff;
+            font-size: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        .info-item-icon {
+            font-size: 24px;
+        }
+        
+        .info-item-text {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-item-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+        
+        .info-item-value {
+            color: #fff;
+            font-weight: 600;
+        }
+        
+        /* Loading animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        .district.loading {
+            animation: pulse 2s infinite;
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .city-map {
+                height: 500px;
+            }
             
-            <div class="map-card">  
-                <div class="map-icon">🏢</div>  
-                <div class="map-title">市中心商务区</div>  
-                <div class="map-description">  
-                    现代化的商务中心，高楼大厦和购物中心的聚集地  
-                </div>  
-                <a href="downtown-map.html" class="map-link">查看地图</a>  
-            </div>  
+            .district {
+                padding: 15px;
+            }
             
-            <div class="map-card">  
-                <div class="map-icon">🏡</div>  
-                <div class="map-title">郊区住宅</div>  
-                <div class="map-description">  
-                    安静的郊区社区，家庭住宅和社区设施  
-                </div>  
-                <a href="suburbs-map.html" class="map-link">查看地图</a>  
-            </div>  
+            .district-icon {
+                font-size: 32px;
+            }
             
-            <div class="map-card">  
-                <div class="map-icon">🏭</div>  
-                <div class="map-title">工业区</div>  
-                <div class="map-description">  
-                    城市的工业核心，工厂和物流设施  
-                </div>  
-                <a href="industrial-map.html" class="map-link">查看地图</a>  
-            </div>  
-        </div>  
-    </div>  
-</body>  
+            .district-name {
+                font-size: 14px;
+            }
+            
+            .district-desc {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="city-container">
+        <div class="city-header">
+            <h1 class="city-title">Lumina City</h1>
+            <p class="city-subtitle">Interactive District Navigation System</p>
+        </div>
+        
+        <div class="map-wrapper">
+            <div class="city-map">
+                <!-- Background roads -->
+                <div class="road road-horizontal"></div>
+                <div class="road road-vertical"></div>
+                
+                <!-- Old Town District -->
+                <div class="district old-town" onclick="navigateToDistrict('old-town')">
+                    <span class="status-indicator status-available">Available</span>
+                    <div class="district-icon">🏛️</div>
+                    <div class="district-name">Old Town</div>
+                    <div class="district-desc">Historic heart of the city</div>
+                </div>
+                
+                <!-- University Area -->
+                <div class="district university" onclick="navigateToDistrict('university')">
+                    <span class="status-indicator status-coming">Coming Soon</span>
+                    <div class="district-icon">🎓</div>
+                    <div class="district-name">University Area</div>
+                    <div class="district-desc">Academic & research hub</div>
+                </div>
+                
+                <!-- CBD Core District -->
+                <div class="district cbd" onclick="navigateToDistrict('cbd')">
+                    <span class="status-indicator status-available">Available</span>
+                    <div class="district-icon">🏙️</div>
+                    <div class="district-name">CBD Core District</div>
+                    <div class="district-desc">Business & financial center</div>
+                </div>
+                
+                <!-- Seaside -->
+                <div class="district seaside" onclick="navigateToDistrict('seaside')">
+                    <span class="status-indicator status-coming">Coming Soon</span>
+                    <div class="district-icon">🌊</div>
+                    <div class="district-name">Seaside</div>
+                    <div class="district-desc">Coastal recreation area</div>
+                </div>
+                
+                <!-- Entertainment Industry District -->
+                <div class="district entertainment-industry" onclick="navigateToDistrict('entertainment-industry')">
+                    <span class="status-indicator status-coming">Coming Soon</span>
+                    <div class="district-icon">🎬</div>
+                    <div class="district-name">Entertainment Industry</div>
+                    <div class="district-desc">Media & production center</div>
+                </div>
+                
+                <!-- Leisure Entertainment District -->
+                <div class="district leisure" onclick="navigateToDistrict('leisure')">
+                    <span class="status-indicator status-coming">Coming Soon</span>
+                    <div class="district-icon">🎭</div>
+                    <div class="district-name">Leisure Entertainment</div>
+                    <div class="district-desc">Arts & nightlife quarter</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <div class="info-title">
+                <span>📊</span>
+                <span>City Statistics</span>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-item-icon">👥</div>
+                    <div class="info-item-text">
+                        <span class="info-item-label">Population</span>
+                        <span class="info-item-value">2.4 Million</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-item-icon">🗺️</div>
+                    <div class="info-item-text">
+                        <span class="info-item-label">Total Districts</span>
+                        <span class="info-item-value">6 Zones</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-item-icon">🚇</div>
+                    <div class="info-item-text">
+                        <span class="info-item-label">Metro Lines</span>
+                        <span class="info-item-value">4 Active Lines</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-item-icon">✅</div>
+                    <div class="info-item-text">
+                        <span class="info-item-label">Available Maps</span>
+                        <span class="info-item-value">2 of 6 Complete</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function navigateToDistrict(district) {
+            // Map district names to HTML files
+            const districtFiles = {
+                'old-town': 'maps/old-town.html',
+                'cbd': 'maps/cbd.html',
+                'university': 'maps/university.html',
+                'seaside': 'maps/seaside.html',
+                'entertainment-industry': 'maps/entertainment-industry.html',
+                'leisure': 'maps/leisure.html'
+            };
+            
+            // Check if the district map exists
+            const availableDistricts = ['old-town', 'cbd'];
+            
+            if (availableDistricts.includes(district)) {
+                // Add loading animation
+                document.querySelector(`.${district === 'old-town' ? 'old-town' : district}`).classList.add('loading');
+                
+                // Navigate after a short delay for effect
+                setTimeout(() => {
+                    window.location.href = districtFiles[district];
+                }, 300);
+            } else {
+                // Show coming soon message
+                showComingSoon(district);
+            }
+        }
+        
+        function showComingSoon(district) {
+            const districtNames = {
+                'university': 'University Area',
+                'seaside': 'Seaside',
+                'entertainment-industry': 'Entertainment Industry District',
+                'leisure': 'Leisure Entertainment District'
+            };
+            
+            // Create a temporary notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #1a1a2e, #16213e);
+                color: white;
+                padding: 30px 50px;
+                border-radius: 20px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+                border: 2px solid rgba(255,193,7,0.5);
+                z-index: 1000;
+                animation: popIn 0.3s ease;
+                text-align: center;
+            `;
+            
+            notification.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 15px;">🚧</div>
+                <h3 style="font-size: 24px; margin-bottom: 10px; color: #ffc107;">Coming Soon</h3>
+                <p style="font-size: 16px; color: #aaa;">The ${districtNames[district]} map is under construction.</p>
+                <p style="font-size: 14px; color: #888; margin-top: 10px;">Check back later for updates!</p>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'popOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+        
+        // Add pop animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes popIn {
+                from {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.8);
+                }
+                to {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+            }
+            
+            @keyframes popOut {
+                from {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+                to {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.8);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Add hover sound effect (optional - requires sound files)
+        document.querySelectorAll('.district').forEach(district => {
+            district.addEventListener('mouseenter', () => {
+                // You can add sound effects here if desired
+            });
+        });
+    </script>
+</body>
 </html>
