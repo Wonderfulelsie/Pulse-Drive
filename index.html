@@ -406,7 +406,7 @@
                 
                 <!-- Entertainment Industry District -->
                 <div class="district entertainment-industry" onclick="navigateToDistrict('entertainment-industry')">
-                    <span class="status-indicator status-coming">Coming Soon</span>
+                    <span class="status-indicator status-available">Available</span>
                     <div class="district-icon">🎬</div>
                     <div class="district-name">Entertainment Industry</div>
                     <div class="district-desc">Media & production center</div>
@@ -453,7 +453,7 @@
                     <div class="info-item-icon">✅</div>
                     <div class="info-item-text">
                         <span class="info-item-label">Available Maps</span>
-                        <span class="info-item-value">2 of 6 Complete</span>
+                        <span class="info-item-value">3 of 6 Complete</span>
                     </div>
                 </div>
             </div>
@@ -473,7 +473,7 @@
             };
             
             // Check if the district map exists
-            const availableDistricts = ['old-town', 'cbd'];
+            const availableDistricts = ['old-town', 'cbd', 'entertainment-industry'];
             
             if (availableDistricts.includes(district)) {
                 // Add loading animation
